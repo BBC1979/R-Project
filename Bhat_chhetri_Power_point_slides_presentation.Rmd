@@ -1,0 +1,154 @@
+---
+title: "How is Wine Quality Affected by Physiochemical Compounds?"
+author: "Bhoj Bhat Chhetri"
+date: "`r Sys.Date()`"
+output: powerpoint_presentation
+logo: vcu-logo-image.jpeg
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, warning = FALSE, message = FALSE)
+library(ggplot2)
+library(knitr)
+library(patchwork)
+library(dplyr)
+library(gghighlight)
+library(psych)
+library(forcats)
+library(readr)
+```
+
+```{r}
+# import data giving new data set name i.e., wine_data
+wine_data <- read.csv("C:/HGEN611PROJECT/revised_wine_data.csv")
+```
+## Descriptive background
+>- This study considers data from ***Vinho Verde***, a unique wine production from the Northwest region of Portugal(available in kaggle.com).
+>- The data set was used to analyzed  for the quality of wine affected by Physio-chemical compounds.
+
+
+>- The essential **owner** of this dataset is Prof.Dr. Paulo Cortez, University of Minho, Guimares, Portugal.
+
+
+>- The physio-chemical variables are sulphates,chlorides, alcohol, pH etc and sensory variable is  quality.
+
+
+## Main features of the dataset
+>- The data were collected from May 2004 to February 2007 using only protected designation of origin samples that were tested at the official certification entity ***Comissao de Viticultura da Regiao dos Vinhos Verdes***(CVRVV) and recorded by a computerized system (iLab).
+
+>- The data set has only the numeric variables with 1599 red wines and 4898 white wines.
+
+
+>- The analysed variables result showed that White wines are of higher quality.
+
+
+## Image
+
+```{r fig.alt = "Crochet (not knitting!) needle with colorful yarn", out.width="120%",fig.cap=" Image: Wine testing process by experts."}
+knitr::include_graphics("tasting-red-several.jpg")
+```
+
+## Distribution of Chlorides 
+
+```{r fig.margin=TRUE, fig.cap="Figure: 2.1 Bar graph for chlorides in wine data set. This bar plot represents the distribution of chlorides based on its amount present in the wine ie.,catogorized as low(<0.050gm/L), high(>0.065gm/L and medium(>0.051gm/L)."}
+ 
+wine_data %>%                                     # revised data for the analysis
+count(chlorides.cat) %>%                          # it pipes the chlorides categorical                                                                    # variable from the data table
+mutate(chlorides_ordered = fct_reorder
+         (.f = chlorides.cat, .x =n)) %>%         # display the variable where factor is mapped to                                                        # position
+ggplot(aes(x = chlorides_ordered, y =n)) +        # mapped the variable orderly
+geom_col(fill="#f68060") +                        # It fill the orange color in the plot
+coord_flip() +                                    # It drawing the data points in the plot including the                                                   # plot margins
+labs(x ="Level of chlorides(gm/L)", y="Frequency",
+ caption="Note: gm=gram,L= litres")               # add the names of variables in x and y axis and                                                        # caption at the bottom of the plot
+
+```
+
+## Distribution of Alcohol
+
+
+```{r fig.cap="Figure: 2.2 The histogram of alcohol in wine style. This histogram represents the distribution of red and white wine based on percentage of alcohol by volume." }
+# Creating the histogram based on the alcohol categories
+wine_data%>% # revised data
+ggplot(aes(x=alcohol, col=style))+                 # mapped the variables in data
+geom_histogram(col="black", fill= "red", size=1) + # create the histogram plot
+gghighlight(max(alcohol)>10) +                     # Highlighted the maximum alcohol amount more then 10
+labs(x="Percentage of alcohol in wine by volume",
+y="Frequency")+                                    # write the variables names on x and y axis
+facet_wrap(~style)                                 # wraps the variables into 2d
+
+```
+
+## Box plot for sulphates
+```{r  fig.cap = "Figure: 2.3 Box plot of sulphates in wine style. The box plot of sulphates across the wine type indicates that the amount of sulphates present in the wine dataset is not uniform."}
+wine_data %>%                                    # revised data from the original data set
+mutate(style= fct_reorder(style, sulphates)) %>% # create the factor is mapped to the position based on                                                  # sulphates values
+ggplot(aes(x=style, y=sulphates, fill=style))+   # mapping the variables using aes function to crate the                                                  # ggplot
+geom_boxplot(varwidth = TRUE)+                   # creates the box plot of the given variables.
+scale_y_continuous(limits=c(0.2,1.6)) +          # customize the y- axis of the given plot.
+theme(legend.position = "right")+                # adjust the theme on right side of the figure
+labs(x= "Types of wine",y= "sulphates(mg/L)",
+caption = "Note: mg= milligram,L= litre")        # Add the variables name on the x and y axis, and                                                       # caption on the bottom.
+ 
+```
+
+
+## Scatter plot of volatile and fixed acidity
+```{r fig.cap= "Figure: 2.4 Scatter plot for fixed and volatile acidity.The scatter plot shows the relationship between the volatile and fixed acidity in both wines." }
+wine_data %>%                                                   # revised wine data set
+ggplot(aes(x=volatile_acidity, y = fixed_acidity, col=style)) + # mapping the variables for ggplot
+geom_point()+                                                   # create the scatter plot of given                                                                      # variables
+theme(legend.position ="right")+                                # add the theme on right side of the                                                                    # image
+labs(x="fixed acidity(mg/L)",y=" volatile acidity(gm/L)",
+caption = "Note:mg = milligram, gm= gram, L= litres")           # add the variable names on x and y axis                                                                 # and caption at the bottom. 
+
+```
+
+
+## Alcohol and residual sugar in wine
+```{r}
+p1<- wine_data %>%                                           # revised data
+    ggplot(aes(factor(quality), alcohol, fill=quality.cat))+ # mapped the position based on the factor                                                               # variables
+    geom_boxplot()+                                          # create the box plot based on the values                                                               # of variables
+    labs(x="wine quality",y="alcohol(gm/l)")                 # add the variables names on the x and y                                                                # axis
+      
+```
+```{r}
+p2<- wine_data %>%                                              # it pipes revised data for the plot 
+ ggplot(aes(factor(quality), residual_sugar, fill=quality.cat))+# mapped the position of the variables
+ geom_boxplot()+                                                # crate the box plot of given values of                                                                 # the variables
+ labs(x= "wine quality",y= "residual sugar(gm/l)")              # add the variable names on the axis                                                                    # and foot caption on the bottom.
+    
+```
+```{r fig.cap="Figure: 2.5 Combined box plot:I-alcohol and II-residual sugar in wine quality(A=rating>6.5,B>4.9 & C<4.8). The box graph 'A and B' shows the minimum, maximum,first quartile, second quartile(median) and third quartile of the alcohol present in the wine dataset."}
+    p1+p2 +                                 # place the two plots together based on patchwork function
+    plot_layout(guides='collect')+          # arrange the plot properly
+    plot_annotation(tag_levels= c('I'),     # order the figure serially
+                    tag_prefix= 'Fig.',     # add fig caption
+                    tag_sep= '.',           # add punctuation mark after the figure
+                    tag_suffix=':')         # add the semicolon after the figure
+```
+
+## Conclusion
+
+>- The data analysis program was successfully used to create plots for direct comparison of various wine attributes
+
+>- Analysis shows that the distribution of chlorides is higher in low category group which represents the better quality of wine.
+
+
+>- The data shows that high quality of wine has a higher percentage of alcohol. 
+
+>- Red wine was found to be higher sulphates than white wine.
+
+>- The analysis concludes that the white wines are of higher quality than the red wines.
+
+
+## References
+
+1. Cortez, P., Cerdeira, A., Almeida, F., Matos, T.,
+& Reis, J. (2009).Modeling wine preferences by 
+data mining from physicochemical properties.Decision support systems, 
+47(4),547-553.(https://www.sciencedirect.com/science/
+article/pii/S0167923609001377)
+3. Tidyverse.org (https://ggplot2.tidyverse.org/reference/geom_histogram.html)
+4. Forcats tidyverse(https://forcats.tidyverse.org/articles/forcats.html)

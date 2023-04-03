@@ -1,0 +1,246 @@
+---
+title: "How is Wine Quality Affected by Physiochemical Compounds?"
+author: "Bhoj Bhat Chhetri"
+date: "`r Sys.Date()`"
+output:
+  bookdown::pdf_document2:
+    toc: true 
+    toc_float:     
+      collapsed: false
+      smooth_scroll: false
+---
+```{r setup, include=FALSE}
+
+    
+
+knitr::opts_chunk$set(echo=FALSE, warning = FALSE, message = FALSE)
+library(ggplot2)
+library(knitr)
+library(patchwork)
+library(dplyr)
+library(gghighlight)
+library(report)
+library(psych)
+library(forcats)
+library(readr)
+library(table1)
+
+```
+
+```{r read.csv file}
+# import data giving new dataset name ie, wine_data
+wine_data <- read.csv("C:/HGEN611PROJECT/revised_wine_data.csv")
+
+```
+
+# Introduction
+
+ **Wine** has been historically consumed by humans as one of the important alcoholic beverages highly popular throughout the world. About 7.9 billion of the world's population drink wine as an alcoholic beverage. In the USA, about 118 million people drink wine, among them females 45% and males 15%.   While many tout its health benefits, researchers and medical experts continue to debate whether the drink can offer a wholesome advantage to human health. ([source](https://www.forbes.com/sites/lizthach/2022/04/25/us-wine-market-sales-up-168-in-2021-pointing-towards-hot-wine-trends-in-2022/?sh=1146f53743d2)) 
+
+## Background 
+
+This study considers data from **Vinho Verde**, a unique wine production from the Northwest region of Portugal. A total of **6497** wines were collected from May 2004 to February 2007 using only protected designation of origin samples that were tested at the official certification entity **Comissao de Viticultura da Regiao dos Vinhos Verdes**(CVRVV) and recorded by a computerized system (iLab). The most common physiological test and the sensory test are conducted to separate data sets of white and red wine. A sensory test was done via blind test, which graded wine on a scale from zero(very bad) to 10(excellent)([link](https://www.sciencedirect.com/science/article/pii/S0167923609001377)). The result of this test is useful for improving the production process and improve the quality of the wine. 
+
+## Description
+
+In this dataset, the goal is to make prediction of wine quality based on some chemical facts. Despite the initial data, the wine is scored from (0-10) some of which may guess that data is much more suited to be predicted using regression, we need to remember that the score is discrete, which makes classification model more suitable for this analysis.
+
+**The purpose **of this analysis is to construct the prediction of wine quality based on some chemical facts and interpretation of the model by deriving five most important factors for wine quality. Will it be percentage of alcohol, acidity or other variables?this analysis will try to answer these questions after analyzing this dataset.
+
+The essential **owner** of this dataset were Paulo Cortez, University of Minho, Guimares, Portugal,
+([link](https://www3.dsi.uminho.pt/pcortez)) A. Cerdeira, F. Almeida, T. Matos and J. Reis, Viticulture Commission of the Vinho Verde Region(CVRVV), Porto, Portugal and the data was **collected by** A. Cerdeira, F. Almeida, T. Matos and J. Reis, Viticulture Commission of the **Vinho Verde** Region(**CVRVV**), Porto, Portugal. The data representative was included all samples stored in CVRVV.
+
+**The strength** of the dataset represents only one product of wine produced in **Minho** region of Portugal,first dataset of this kind, highly popular, with 2 million UCI download. The data set is large, but the proportion of red and white wine data is significantly different. The white wine representation is three times higher than the red wine data. The number of data set is a huge strength of this study as the probability of inclusion is higher. The separate data set for red and white wine gives clear demarcation on data characters. The inclusion of sensory tests along with physio-chemical tests gives more clarity on the result. One of the best things about this data set is they did not have null values in the observations section of all the variables, which helps in easy analysis of the data by preventing the statistical power, biased estimates and invalid inclusions. The dataset is publicly available, so everyone can use it to analyze in different programming languages.
+
+**The weakness** was lack of other relevant features, such as selling price, production cost, etc. The relationship between human experts and the physio-chemical lab test data set is not clear yet. This data set does not represent any other brand of wine available in the market, other than this unique product from Portugal, and the data set contains only numeric variables without a categorical variable, which creates complications in ggplot.Similarly the variable names are in the column names without row names that creates the trouble in proper analysis and plot.Similarly the main missingness of this dataset is no row names and categorical variables.
+When it comes to understanding whether wine can be useful to human health and to what extent it can be healthy for the human body, it is very important to understand the various chemical components that make up the wine. It is also important to understand the distinction between **white and red wine**, the two general wine types that are produced and marketed today, not only because they are produced and inventoried in different ways. Also, their chemical composition might not be the same. This can evidently offer whether one is better than the other. 
+
+```{r fig.alt = "Crochet (not knitting!) needle with colorful yarn", out.width="90%"}
+knitr::include_graphics("tasting-red-several.jpg") # image shows the wine testing process
+```
+
+Image:1.1 Wine testing process by experts
+
+This image shows data collected over the last several months by VineSleuth. The VineSleuth's data shows that expert wine elevators "are able to repeat their observations on individual wine samples about 90% of the time" when tasting wines blind.([source](https://www.1winedude.com/vinesleuth-data-shows-expert-wine-tasters-are-consistent/)).This image describes the testing process of wine.
+
+
+```{r fig.alt = "Crochet (not knitting!) needle with colorful yarn", out.width="90%"}
+
+knitr::include_graphics("redwhite.jpg") # Image indicates data sample
+
+```
+
+Image: 1.2 Wine samples in the dataset
+
+This image shows the sample of the red and white wine based on the color, which represents the types of wine in the data set. The red wine looks dark red grapes juice and white wine looks like green grape juice due to their sources are red and white grapes. ([source](https://www.eatingwell.com/article/152611/5-most-popular-wines/))
+
+# Figures
+
+
+```{r}
+ 
+wine_data %>%                                    # processed data for the analysis
+count(chlorides.cat) %>%                         # it pipes the chlorides categorical variable
+mutate(chlorides_ordered = fct_reorder
+(.f = chlorides.cat, .x =n)) %>%                 # display the variable where factor is mapped to                                                                                                    # position
+ggplot(aes(x = chlorides_ordered, y =n)) +       # mapped the variable orderly
+geom_col(fill="#f68060") +                       # It fill the orange color in the plot
+coord_flip() +                                   # It drawing the data points in the plot including the                                                  # plot margins
+labs(title = "Distribution of chlorides in wine",# title of the plot
+x ="Level of chlorides(g/L)", y="Frequency",     # add the names of variables in x and y axis
+caption="Note: gm=gram,L= litres")+              # write notes on the bottom of the plot
+theme(plot.title = element_text(size = 15,
+hjust= 0.5,colour = "#1b98e0"))                  # Add the color and adjust size and
+                                                 # fix the title at the center
+```
+**Figure: 2.1 Bar graph for chlorides in wine dataset**
+
+This bar plot represents the distribution of chlorides based on its amount present in the wine. As we can observe less amount of chlorides is good for the wine. Most of the wine in the data has less amount of chloride categorized as low(<0.050g/L), maximum amount as high(>0.065g/L) and moderate amount categorized as medium(>0.051g/L).However, low amount of chlorides was reported in maximum wine samples.
+
+
+```{r}
+# Creating the histogram based on the alcohol categories
+wine_data%>%                                                 # processed data
+ggplot(aes(x=alcohol, col=style))+                           # mapped the variables in data
+geom_histogram(col="black", fill= "red", size=1)+            # create the histogram plot
+gghighlight(max(alcohol)>10) +                               # Highlighted the maximum alcohol amount                                                                                                            # more then 10
+labs(title="Distribution of alcohol in wine",
+x="Percentage of alcohol in wine by volume",y="Frequency")+  # write the foot notes
+facet_wrap(~style) +                                         # makes long ribbon of the panels and                                                                                                               # wraps it into 2d
+theme(plot.title = element_text(size = 15,
+hjust= 0.5,colour = "#1b98e0"))                              # add the color and fix the size on the                                                                                                                                                                         # title and fix at the center
+```
+**Figure: 2.2 The histogram of alcohol in wine style**
+
+This histogram represents the distribution of red and white wine based on percentage of alcohol by volume. As seen from the plot most of the wine has alcohol amount less then 10%.The gghighlight fuction hilighted the maximum distribution based on amount of alcohol more than 10%.There is very less number of red wine identified at alcohol level (14%)compared to white wine. 
+
+```{r}
+wine_data %>%                                          # processed data from the raw data set.
+mutate(style= fct_reorder(style, sulphates)) %>%       # create the factor is mapped to the position                                                           # based on sulphates values
+ggplot(aes(x=style, y=sulphates, fill=style))+         # mapping the variables using aes function to                                                           # crate the ggplot
+geom_boxplot(varwidth = TRUE)+                         # creates the box plot of the given variables.
+scale_y_continuous(limits=c(0.2,1.6)) +                # customize the y- axis of the given plot.
+theme(legend.position = "right")+                      # adjust the theme on right side of the figure
+labs(title="Box plot for sulphates in wine",
+x= "Types of wine",y= "sulphates(mg/L)",
+caption = "Note: mg= milligram,L= litre") +            # Add the title and names on the x and y axis
+theme(plot.title = element_text(size =15,              # add color, the size of title and fix at the
+hjust= 0.5,colour = "#1b98e0"))                        # center.
+
+```
+**Figure: 2.3 Box plot of sulphates in wine style ** 
+
+The box plot of sulphates across the wine type indicates that the amount of sulphates present in the wine dataset is not uniform or widely distributed. The median value of sulphates for the white wine is slightly above the first quartile where as the red wine is above the lower median quartile, this indicates there is significant difference of sulphates in wine type. In white wine median value lies slightly about the lower quartile(25%), where as the red wine lies lower half quartile(50%) which help to easily identify the sulphates amount in wine dataset. 
+
+```{r}
+wine_data %>%                                    # processed wine dataset
+ggplot(aes(x=volatile_acidity, 
+y = fixed_acidity, col=style)) +                 # mapping the variables for ggplot
+geom_point()+                                    # create the scatter plot of given variables
+theme(legend.position ="right")+                 # add the theme on right side of the image
+labs(title="Scatter plot of volatile and fixed acidity of wine", # title for the plot
+x="fixed acidity(mg/L)",y="volatile acidity(gm/L)",
+caption = "Note:mg = milligram, gm= gram,L= litres")+            # notes on the bottom 
+theme(plot.title = element_text(size=15,
+hjust= 0.5,colour="#1b98e0"))                    # add the color, fix the text size on title and adjust                                                  # at the center
+```
+**Figure: 2.4 Scatter plot for fixed and volatile acidity **
+
+The scatter plot shows the relationship between the volatile and fixed acidity in both wines. Acidities are highly scattered in red wine where as white wine is more concentrated at level of 8gm/lit on volatile and 0.4 mg/lit on fixed site. Graph shows that red wine acidity (volatile and fixed) are significantly higher distribution compared to white wine.
+
+```{r}
+ p1<- wine_data %>%                           # processed data
+  ggplot(aes(factor(quality),
+  alcohol, fill=quality.cat))+                 # mapped the position based on the factor variables
+  geom_boxplot()+                              # create the box plot based on the values of variables
+  labs(x="wine quality",y="alcohol(gm/l)")+    # write the title on the figure 
+                                               # write the foot notes in the plot
+  theme(plot.caption=element_text(size=8))+    # write the theme with                                                                                  # caption and adjust the size 
+  theme(plot.title = element_text(size = 8,
+  hjust= 0.5,colour = "#1b98e0"))              # add and fix the size of                                                                               # title and placed at the center
+  
+```
+
+```{r}
+ p2<- wine_data %>%                            # it pipes processed data for the plot 
+ ggplot(aes(factor(quality), residual_sugar, 
+ fill=quality.cat))+                           # mapped the position of the variables
+ geom_boxplot()+                               # crate the box plot of given 
+                                               # values of the variables
+ labs(x= "wine quality",y= "residual sugar(gm/l)")+
+ theme(plot.caption=element_text(size=8))+     # write the theme and fix the size on the plot
+ theme(plot.title = element_text(size = 8,
+ hjust= 0.5,colour = "#1b98e0"))               # add the color and fix the                                                                             #size and place the title at the center
+
+```
+
+```{r}
+       (p1+p2) +                             # place the two plots together based 
+                                             # on patchwork function
+       plot_layout(guides='collect')+        # arrange the plot properly
+       plot_annotation(tag_levels= c('A'),   # order the figure serially
+                    tag_prefix= 'Fig.',      # add fig caption
+                    tag_sep= '.',            # add punctuation mark after                                                                            # the figure
+                    tag_suffix=':')          # add the semicolon after the                                                                           # figure
+                  
+ 
+``` 
+**Figure: 2.5 Box plot for quality Vs alcohol and residual sugar of wine. The quality is based on the rating given by experts (A=>6.5,B=>4.9 & C=<4.8)**
+
+The box graph 'A' and 'B' shows the minimum, maximum, first quartile, second quartile (median) and third quartile of the alcohol present in the wine dataset. As observed in quality rating 'C' the wine quality is evenly distributed and no high variation is observed. While in category 'B', amount of alcohol has wide variations. The amount of alcohol above the upper quartile is very high.
+ Besides in 'A', the distribution is similar  as in 'C'. Clearly, the wine with quality 'B' has large amount of alcohol.The quality is determined  based on rating of the wine. The quality 'A' has rating>6.5, B>4.9 and C<4.8.
+
+Similarly, the box graph figure 'B' shows the minimum, maximum, first quartile, second quartile(median) and third quartile of the residual sugar present in the wine dataset. As we observed in quality rating 'B' the wine quality is evenly distributed without any variations and upper quartile is high. While in category 'A' amount of residual sugar has wide variation, the amount of sugar observed below the median quartile. Besides in 'B' the distribution is similar in 'C'. The wine quality 'B' has large amount of residual sugar. The quality rating is same in graph figure 'A'.
+
+# Demographic tables
+
+```{r}
+ # Create the demographic table of wine data set using table1 function
+wine_dt<-wine_data %>%                                              # create the new data name
+select(.,-fixed_acidity,-volatile_acidity,-free_sulfur_dioxide,     # select only specific numeric                                                                          # variables for the table
+-citric_acid,-residual_sugar,-total_sulfur_dioxide,
+-quality.cat, -alcohol.cat,-chlorides.cat)
+wine_dt$style<-factor(wine_dt$style)                                # factorize the wine style
+table_numeric<-table1(~density +  chlorides+pH +
+sulphates + alcohol + quality | style,data=wine_dt,
+digits=2,topclass="Rtable1-grid")                                   # create the numeric demographic                                                                        # descriptive table
+table_numeric                                                       # call th numeric table
+```
+**Table: 3.1 Demographic table for numeric variables of wine dataset**
+
+The demographic table shows that there is large differences in white and red wine in terms of some variables like chlorides, sulphates, and quality, where as less significance  differences in alcohol,density, and pH.
+There is no significant differences seen among mean value of density of red and white wine where as mean value of chlorides  in red wine is almost two times higher than white. Similarly, no differences seen between mean PH values of white and red wine. Sulfate is noted higher in red wine. Percentage of alcohol in red and white wine is not much difference in its mean value. Mean quality value of white wine is higher than red.   
+
+```{r}
+wine_dt<-wine_data %>%                                              # create new data name
+select(.,-fixed_acidity,-volatile_acidity,-free_sulfur_dioxide,     # select only the categorical                                                                           # variables 
+-citric_acid,-residual_sugar,-total_sulfur_dioxide,-pH,
+-chlorides,-alcohol,-quality,-density,-sulphates)
+wine_dt$style<-factor(wine_dt$style)                                # factor the style because it                                                                           # separate red and white wine
+table_categorical<-table1(~chlorides.cat+alcohol.cat+
+quality.cat|style,data=wine_dt,digits=2,topclass="Rtable1-grid")    # create the table of categorical                                                                       # variables using table1 function.
+table_categorical                                                   # Call the categorical table
+```
+Note: **clorides.cat** ie., amount of chlorides in gram/litre low(<0.050), medium(<0.051), high(>0.065), **alcohol.cat** i.e, amount of alcohol percentage by volume Good(<8.5),Better(>8.6)and Best(>12) and **quality.cat** based on rating A(>6.5),B(>4.9) and C(<4.8)
+
+**Figure: 3.2 Demographic table for categorical variables of wine dataset**
+
+The descriptive statistic on demographic table of categorical variables of the wine dataset  shows the frequencies, percentage and fraction of the given variables. In chlorides categorical variable most of the red wine samples lies on higher category with(84.9%) that means amount of chlorides in those wine more than (0.065 gm/L), where as in white wine it is about(5.7%)on this category.Similarly low chloride category is higher(76.3%)in white wine with chlorides amount (between 0.051-0.065 gm/L) where as in red wine with(3.9%).In alcohol category, white wine with best category (16.6%) having alcohol amount more than (12%) by volume compared to red wine(10.1%). In quality category white wine shows higher 'A' with(21.6%)based on the rating more than 6.5 for each sample, where as in red wine with(13.6%). There is insignificance differences in 'B' and 'C' category in both wines.
+
+# Conclusion 
+ 
+ This data set was collected from kaggle.com ([link](https://www.kaggle.com/datasets/dell4010/wine-dataset)), one of the publicly available site and this data set was collected by Paulo Cortez et.al,.This data set only contains 11 physio chemical and one sensory variables and all of them have numeric values. The data analysis program was successfully used to create plots for direct comparison of various wine attributes.The analysis shows that the distribution of chlorides is higher in low category group. The data shows that high quality of wine has higher percentage of alcohol. The distribution of sulphates was not significantly difference between the wines. Analysis concludes that white wines are of higher quality than red the wines. 
+ 
+ 
+# Research references
+1. Cortez, P., Cerdeira, A., Almeida, F., Matos, T., & Reis, J. (2009). Modeling wine preferences by data mining from physicochemical properties. Decision support systems, 47(4), 547-553.(https://www.sciencedirect.com/science/article/pii/S0167923609001377)
+2. Stackoverflow.com(https://stackoverflow.com/questions/48799074/how-to-reorder-a-factor-in-a-dataframe-with-fct-reorder)
+3. Sthsa.com( http://www.sthda.com/english/wiki/ggplot2-histogram-plot-quick-start-guide-r-software-and-data-visualization)
+4. Tidyverse.org (https://ggplot2.tidyverse.org/reference/geom_histogram.html)
+5. Forcats tidyverse(https://forcats.tidyverse.org/articles/forcats.html)
+6. Histogram and frequency polygon(https://ggplot2.tidyverse.org/reference/geom_histogram.html)
+7. Create the HTML of descriptive statistics table  (https://cran.r-project.org/web/packages/table1/vignettes/table1-examples.html)
+8. Kaggle(https://www.kaggle.com/datasets/dell4010/wine-dataset)
+
+# Package Citations
+`r report(sessionInfo())`
